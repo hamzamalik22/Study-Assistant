@@ -1,77 +1,33 @@
-from django.shortcuts import render,redirect
-from .models import *
-from django.http import JsonResponse
-from groq import Groq
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Chat
+from .serializers import ChatSerializer
+from rest_framework.permissions import IsAuthenticated  # Import IsAuthenticated
 from django.utils import timezone
+import requests
 
-grok_api_key = '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'
+class ChatAPI(APIView):
+    permission_classes = [IsAuthenticated]  # Apply IsAuthenticated permission
 
-def ask_groq(message):
-    client = Groq(
-        api_key = grok_api_key,
-    )
+    def post(self, request):
+        message = request.data.get('message')
+        if message:
+            response = self.ask_groq(message)
+            chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now())
+            chat.save()
+            serializer = ChatSerializer(chat)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response({'error': 'Message cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
 
-    chat_completion = client.chat.completions.create(
-        messages=[
-            {
-                "role": "user",
-                "content": message,
-            }
-        ],
-        model="mixtral-8x7b-32768",
-    )
-
-    answer = chat_completion.choices[0].message.content
-
-    return answer
-
-
-def chatbot(request):
-    chats = Chat.objects.filter(user=request.user)
-    if request.method == 'POST':
-        message = request.POST.get('message')
-        response = ask_groq(message)
-
-        chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now())
-        chat.save()
-        return JsonResponse({'message' : message ,'response' : response})
-    return render(request, 'grokapp/chat.html', {'chats' : chats})
-
-
-def test(request):
-    chats = Chat.objects.filter(user=request.user)
-    if request.method == 'POST':
-        message = request.POST.get('message')
-        response = ask_groq(message)
-
-        chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now())
-        chat.save()
-        return JsonResponse({'message' : message ,'response' : response})
-    return render(request, 'grokapp/test.html', {'chats' : chats})
-
-# Create your views here.
-def app(request):
-    return render(request, 'grokapp/home.html')
-
-# def createRoom(request):
-#     room = Room.objects.create() 
-#     return redirect('room_detail', room_id=room.id)
-
-# def room_detail(request, room_id):
-#     room = Room.objects.get(id=room_id)
-#     return render(request, 'grokapp/room.html', {'room': room})
-
-
-# def room(request,pk):
-#     chats = Chat.objects.filter(user=request.user)
-#     if request.method == 'POST':
-#         message = request.POST.get('message')
-#         response = ask_groq(message)
-
-#         chat = Chat(user=request.user, message=message, response=response, created_at=timezone.now())
-#         chat.room = room
-#         chat.save()
-#         return JsonResponse({'message' : message ,'response' : response})
-#     return render(request, 'grokapp/room.html', {'chats' : chats})
-
-
+    def ask_groq(self, message):
+        grok_api_key = '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'
+        url = 'https://api.grok.ai/chat/'
+        headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {grok_api_key}'}
+        data = {'message': message}
+        response = requests.post(url, headers=headers, json=data)
+        if response.status_code == 200:
+            return response.json().get('response')
+        else:
+            return 'Error occurred during response'

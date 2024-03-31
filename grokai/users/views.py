@@ -1,48 +1,32 @@
-from django.shortcuts import render, redirect
-from .models import *
 from django.contrib.auth import login, authenticate, logout
-from django.contrib import messages
-from .forms import *
+from django.contrib.auth.models import User
+from django.http import JsonResponse
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
 
-
-def loginUser(request):
-    if request.method == 'POST':
-        username = request.POST['username'].lower()
-        password = request.POST['password1']
-
-        try:
-            user = User.objects.get(username = username)
-        except:
-            messages.error(request, 'User not found')
-
+class UserLogin(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
         user = authenticate(request, username=username, password=password)
-
         if user is not None:
             login(request, user)
-            return redirect('home')
+            return JsonResponse({'message': 'Login successful'})
         else:
-            messages.error(request, 'Username or Password Incorrect')
+            return JsonResponse({'error': 'Username or Password Incorrect'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    context = {'page' : 'Login'}
-    return render(request,'login_register.html', context)
-
-
-def RegisterUser(request):
-    form = CustomUserCreationForm
-
-    if request.method == 'POST':
-        form = CustomUserCreationForm(request.POST)
-        if form.is_valid():
-            user = form.save()
-            messages.success(request, 'Account Created Successfully')
-            return redirect('login-User')
+class UserRegister(APIView):
+    def post(self, request):
+        username = request.data.get('username')
+        password = request.data.get('password')
+        if User.objects.filter(username=username).exists():
+            return JsonResponse({'error': 'Username already exists'}, status=status.HTTP_400_BAD_REQUEST)
         else:
-            messages.error(request, 'an error occured during registration')
-            
-    context = {'page' : 'Register','form' : form}
-    return render(request,'login_register.html', context)
+            user = User.objects.create_user(username=username, password=password)
+            return JsonResponse({'message': 'Account created successfully'}, status=status.HTTP_201_CREATED)
 
-def logoutUser(request):
-    logout(request)
-    messages.info(request, 'User was logged out!')
-    return redirect('home')
+class UserLogout(APIView):
+    def post(self, request):
+        logout(request)
+        return JsonResponse({'message': 'User logged out'})
