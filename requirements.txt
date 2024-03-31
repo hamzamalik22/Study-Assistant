@@ -1,5 +1,0 @@
-django > 5.0.0
-grok
-djangorestframework
-requests
-djangorestframework-simplejwt
