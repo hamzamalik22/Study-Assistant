@@ -2,13 +2,17 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from .models import Chat
-from .serializers import ChatSerializer
-from rest_framework.permissions import IsAuthenticated  # Import IsAuthenticated
+from .serializers import ChatSerializer,ChatListSerializer,ChatDetailSerializer
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.generics import ListAPIView, RetrieveAPIView
 from django.utils import timezone
 import requests
+from groq import Groq 
+import os
 
+# For Chating
 class ChatAPI(APIView):
-    permission_classes = [IsAuthenticated]  # Apply IsAuthenticated permission
+    permission_classes = [IsAuthenticated]
 
     def post(self, request):
         message = request.data.get('message')
@@ -22,12 +26,42 @@ class ChatAPI(APIView):
             return Response({'error': 'Message cannot be empty'}, status=status.HTTP_400_BAD_REQUEST)
 
     def ask_groq(self, message):
-        grok_api_key = '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'
-        url = 'https://api.grok.ai/chat/'
-        headers = {'Content-Type': 'application/json', 'Authorization': f'Bearer {grok_api_key}'}
-        data = {'message': message}
-        response = requests.post(url, headers=headers, json=data)
-        if response.status_code == 200:
-            return response.json().get('response')
-        else:
-            return 'Error occurred during response'
+        
+        grok_api_key = os.environ.get("GROQ_API_KEY")
+        if not grok_api_key:
+            raise ValueError("GROQ_API_KEY environment variable is not set")
+
+        client = Groq(api_key=grok_api_key)
+
+        # Make the request to Grok API
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": message,
+                }
+            ],
+            model="mixtral-8x7b-32768",
+        )
+
+        return chat_completion.choices[0].message.content
+
+
+# For history
+class ChatListAPI(ListAPIView):
+    """
+    Endpoint to retrieve a list of chat messages.
+    """
+    permission_classes = [IsAuthenticated]
+    queryset = Chat.objects.all()
+    serializer_class = ChatListSerializer
+
+# For Detail History
+class ChatDetailAPI(RetrieveAPIView):
+    """
+    Endpoint to retrieve details of a single chat message.
+    """
+    permission_classes = [IsAuthenticated]
+    queryset = Chat.objects.all()
+    serializer_class = ChatDetailSerializer
+    lookup_field = 'id'

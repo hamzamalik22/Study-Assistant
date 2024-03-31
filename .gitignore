@@ -85,5 +85,3 @@ docker-compose.prod.yml
 *.sql.gz
 *.sql.bz2
 
-# Text file
-*.txt
