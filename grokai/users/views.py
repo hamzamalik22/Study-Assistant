@@ -1,4 +1,3 @@
-# users/views.py
 from django.contrib.auth import login, authenticate, logout
 from django.contrib.auth.models import User
 from django.http import JsonResponse

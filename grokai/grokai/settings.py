@@ -41,6 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'grokapp.apps.GrokappConfig',
     'users.apps.UsersConfig',
+    'users',
+    'grokapp',
     'rest_framework',
     'rest_framework_simplejwt'
 ]
