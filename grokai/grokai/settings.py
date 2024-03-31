@@ -41,8 +41,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'grokapp.apps.GrokappConfig',
     'users.apps.UsersConfig',
-    'users',
-    'grokapp',
+    #'users',
+    #'grokapp',
     'rest_framework',
     'rest_framework_simplejwt'
 ]
@@ -147,7 +147,7 @@ REST_FRAMEWORK = {
 # JWT Authentication
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=5),
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
     "ROTATE_REFRESH_TOKENS": False,
     "BLACKLIST_AFTER_ROTATION": False,
