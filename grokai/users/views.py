@@ -4,6 +4,8 @@ from django.http import JsonResponse
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from rest_framework_simplejwt.tokens import RefreshToken
+
 
 class UserLogin(APIView):
     def post(self, request):
@@ -12,7 +14,12 @@ class UserLogin(APIView):
         user = authenticate(request, username=username, password=password)
         if user is not None:
             login(request, user)
-            return JsonResponse({'message': 'Login successful'})
+            refresh = RefreshToken.for_user(user)
+            return Response({
+                'message': 'Login successful',
+                'refresh': str(refresh),
+                'access': str(refresh.access_token)
+            })
         else:
             return JsonResponse({'error': 'Username or Password Incorrect'}, status=status.HTTP_401_UNAUTHORIZED)
 
@@ -25,6 +32,7 @@ class UserRegister(APIView):
         else:
             user = User.objects.create_user(username=username, password=password)
             return JsonResponse({'message': 'Account created successfully'}, status=status.HTTP_201_CREATED)
+        
 
 class UserLogout(APIView):
     def post(self, request):
