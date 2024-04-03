@@ -4,6 +4,7 @@ from rest_framework import status
 from .models import Chat
 from .serializers import ChatSerializer,ChatListSerializer,ChatDetailSerializer
 from rest_framework.permissions import IsAuthenticated
+from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework.generics import ListAPIView, RetrieveAPIView
 from django.utils import timezone
 import requests
@@ -12,6 +13,7 @@ import os
 
 # For Chating
 class ChatAPI(APIView):
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
@@ -52,6 +54,7 @@ class ChatListAPI(ListAPIView):
     """
     Endpoint to retrieve a list of chat messages.
     """
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     queryset = Chat.objects.all()
     serializer_class = ChatListSerializer
@@ -61,6 +64,7 @@ class ChatDetailAPI(RetrieveAPIView):
     """
     Endpoint to retrieve details of a single chat message.
     """
+    authentication_classes = [JWTAuthentication]
     permission_classes = [IsAuthenticated]
     queryset = Chat.objects.all()
     serializer_class = ChatDetailSerializer

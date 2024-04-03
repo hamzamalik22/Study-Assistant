@@ -17,9 +17,10 @@ staticfiles/
 
 # Virtual environment
 venv/
+env/
 .env
 /env
-/venv
+Backend/env
 
 # Compiled Python files
 *.pyc
@@ -84,4 +85,3 @@ docker-compose.prod.yml
 *.sql
 *.sql.gz
 *.sql.bz2
-
